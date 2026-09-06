@@ -144,9 +144,22 @@ class _CandleDockState extends State<CandleDock> {
   Timer? _ticker;
   int _lastShownSecond = -1;
 
+  /// Web only: whether the dock was opened in a floating window on load.
+  bool _autoPoppedOut = false;
+
   @override
   void initState() {
     super.initState();
+    if (kIsWeb && popout.canPopOut && !popout.isPoppedOut) {
+      // Try to open the floating window straight away. This only succeeds if
+      // the browser allows pop-ups for this site; otherwise the page shows a
+      // button so a click (a user gesture) can open it.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final size = _s.mini ? kMiniSize : kFullSize;
+        final ok = popout.popOut(size.width.round(), size.height.round());
+        if (ok && mounted) setState(() => _autoPoppedOut = true);
+      });
+    }
     // Poll the device clock a few times a second and only repaint when the
     // displayed second changes. Polling (rather than a 1 s periodic timer)
     // keeps the display locked to the real clock even if the timer drifts
@@ -187,6 +200,10 @@ class _CandleDockState extends State<CandleDock> {
   Future<void> _toggleMini() async {
     setState(() => _s.mini = !_s.mini);
     await _s.save(widget.prefs);
+    if (kIsWeb && popout.isPoppedOut) {
+      final size = _s.mini ? kMiniSize : kFullSize;
+      popout.resizeSelf(size.width.round(), size.height.round());
+    }
     if (_isDesktop) {
       final size = _s.mini ? kMiniSize : kFullSize;
       await windowManager.setMinimumSize(size);
@@ -230,20 +247,65 @@ class _CandleDockState extends State<CandleDock> {
 
     // On the web the dock sits at its native size in the middle of the page
     // (or fills the window when popped out into a small popup).
+    if (popout.isPoppedOut) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF0B0D10),
+        body: Center(child: dock),
+      );
+    }
+
     final size = _s.mini ? kMiniSize : kFullSize;
     return Scaffold(
       backgroundColor: const Color(0xFF0B0D10),
       body: Center(
-        child: popout.isPoppedOut
-            ? dock
-            : SizedBox.fromSize(size: size, child: dock),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox.fromSize(size: size, child: dock),
+            const SizedBox(height: 20),
+            if (popout.canPopOut) _buildPopOutPrompt(accent),
+          ],
+        ),
       ),
+    );
+  }
+
+  /// Shown under the dock on the web landing page.
+  Widget _buildPopOutPrompt(Color accent) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FilledButton.icon(
+          onPressed: _popOut,
+          style: FilledButton.styleFrom(
+            backgroundColor: accent,
+            foregroundColor: Colors.black,
+          ),
+          icon: const Icon(Icons.open_in_new, size: 18),
+          label: Text(
+            _autoPoppedOut
+                ? 'Opened in a floating window \u2013 open again'
+                : 'Open as floating window',
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          _autoPoppedOut
+              ? 'Keep the floating window on top of your charts. '
+                    'You can close this tab.'
+              : 'Allow pop-ups for this site and the floating window '
+                    'will open automatically next time.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white38, fontSize: 12),
+        ),
+      ],
     );
   }
 
   void _popOut() {
     final size = _s.mini ? kMiniSize : kFullSize;
-    popout.popOut(size.width.round(), size.height.round());
+    final ok = popout.popOut(size.width.round(), size.height.round());
+    if (ok) setState(() => _autoPoppedOut = true);
   }
 
   Widget _buildMini(Color accent, int secs) {

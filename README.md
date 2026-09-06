@@ -17,9 +17,11 @@ that counts down to the close of the current trading candle.
 - Mini mode (double-click the title bar or use the shrink button) collapses
   the dock to a one-line bar with just the timeframe and the countdown.
 - Timeframe, dock corner and mini mode persist between launches.
-- Web version: the dock is centred on a dark page. The "pop out" button opens
-  it in a small chromeless browser popup you can park next to your charts.
-  Chrome/Edge also let you install it as an app (address bar > Install).
+- Web version: on load it tries to open itself in a small chromeless popup
+  window you can park next to your charts. Browsers block that until you allow
+  pop-ups for the site (click the site-info icon in the address bar), so the
+  page also shows an "Open as floating window" button. In the popup, mini mode
+  shrinks the window itself. Chrome/Edge also let you install it as an app.
 
 ## Requirements
 
