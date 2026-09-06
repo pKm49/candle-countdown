@@ -3,6 +3,9 @@
 A small always-on-top desktop dock (Linux and Windows), plus a web version,
 that counts down to the close of the current trading candle.
 
+**Live web version:** https://pkm49.github.io/candle-countdown/ (deployed from
+`main` by `.github/workflows/deploy-pages.yml`).
+
 - Timeframes: **30, 15, 10, 5, 3, 2, 1 minutes**
 - Uses the device clock. Candle boundaries are aligned to the UTC epoch, the
   same grid exchanges use, so the countdown always targets the next real
