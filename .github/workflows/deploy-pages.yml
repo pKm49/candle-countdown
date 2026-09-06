@@ -20,6 +20,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Creates the Pages site (source: GitHub Actions) on first run.
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.44.4
